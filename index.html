@@ -7,12 +7,10 @@
   <meta name="theme-color" content="#0a0a0f" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="KJV Terminal" />
-  <meta name="description" content="Public-domain King James Version — terminal reader, search, plans, notes." />
-  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="description" content="Public-domain King James Version — terminal reader" />
   <link rel="icon" type="image/svg+xml" href="icons/sigil.svg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/canon.css?v=4" />
+  <link rel="stylesheet" href="css/canon.css?v=5" />
 </head>
 <body>
 <canvas id="crt" aria-hidden="true"></canvas>
@@ -72,11 +70,11 @@
 </div>
 <form class="promptbar" id="f" autocomplete="off">
   <span class="prompt">KJV://$</span>
-  <input id="cmd" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="john 3:16 · search love · plan gospels-30 · speak · help" />
+  <input id="cmd" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="john 3:16 · search love · plan · speak · help" />
   <span class="blink">█</span>
 </form>
 <div class="ac" id="ac"></div>
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
-<script src="js/boot.js?v=4" defer></script>
+<script src="js/app.js?v=5" defer></script>
 </body>
 </html>
