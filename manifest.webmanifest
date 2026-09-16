@@ -1,0 +1,13 @@
+{
+  "name": "KJV Terminal",
+  "short_name": "KJV Terminal",
+  "description": "Public-domain King James Version — terminal reader",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    { "src": "icons/sigil.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
