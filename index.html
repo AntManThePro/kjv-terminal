@@ -3,78 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>KJV Terminal</title>
+  <title>KJV Reader</title>
   <meta name="theme-color" content="#0a0a0f" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="KJV Terminal" />
-  <meta name="description" content="Public-domain King James Version — terminal reader" />
-  <link rel="icon" type="image/svg+xml" href="icons/sigil.svg" />
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/canon.css?v=5" />
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/reader.css?v=7" />
 </head>
 <body>
-<canvas id="crt" aria-hidden="true"></canvas>
-<div class="scan" aria-hidden="true"></div>
-<header class="stamp">
-  <div style="display:flex;gap:.7rem;align-items:center;min-width:0">
-    <svg class="sigil" width="42" height="42" viewBox="0 0 64 64" aria-label="KJV">
-      <rect width="64" height="64" rx="14" fill="#0a0a0f" stroke="#00ff87" stroke-width="1.5"/>
-      <circle cx="32" cy="32" r="19" fill="none" stroke="#60efff" stroke-width="1.2"/>
-      <path d="M20 42 L32 14 L44 42 M25.5 32 H38.5" fill="none" stroke="#00ff87" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="32" cy="32" r="3.2" fill="#ff0080"/>
-    </svg>
-    <div style="min-width:0">
-      <div class="op">PUBLIC DOMAIN</div>
-      <h1>KJV</h1>
-      <div class="sub">King James Version · TERMINAL</div>
+  <header class="top">
+    <div class="brand"><b>KJV</b><span>Public domain · no account · no ads</span></div>
+    <div class="jump">
+      <button type="button" id="toOT"><small>Old Testament</small>Genesis</button>
+      <button type="button" id="toNT" class="here"><small>New Testament · you are here</small>Matthew</button>
     </div>
+    <button class="where" id="where" type="button">Matthew · chapter 1<small>Tap to pick a chapter</small></button>
+  </header>
+  <div class="nav">
+    <button class="btn" id="prev" type="button">← Previous</button>
+    <button class="btn" id="next" type="button">Next →</button>
+    <button class="btn wide" id="books" type="button">Choose a book</button>
+    <button class="btn listen" id="listen" type="button">Read aloud</button>
+    <button class="btn more" id="more" type="button">More</button>
   </div>
-  <div class="tools" role="toolbar">
-    <button class="nx" data-act="prev" type="button">PREV</button>
-    <button class="nx" data-act="next" type="button">NEXT</button>
-    <button class="nx c" data-act="books" type="button">BOOKS</button>
-    <button class="nx y" data-act="daily" type="button">DAILY</button>
-    <button class="nx p" data-act="plan" type="button">PLAN</button>
-    <button class="nx c" data-act="map" type="button">MAP</button>
-    <button class="nx" data-act="speak" type="button">LECTIO</button>
-    <button class="nx y" data-act="kernel" type="button">KERNEL</button>
-    <button class="nx" data-act="help" type="button">HELP</button>
-  </div>
-</header>
-<div class="status">
-  <span>LINK <b id="stLink">BOOT</b></span>
-  <span>VERSES <b id="stV" class="y">0</b></span>
-  <span>CURSOR <b id="stCur">—</b></span>
-  <span>MARKS <b id="stMk" class="p">0</b></span>
-  <span>NOTES <b id="stNo" class="p">0</b></span>
-  <span>PLAN <b id="stPl" class="y">off</b></span>
-  <span>PWR <b id="stPwr">idle</b></span>
-</div>
-<div class="shell">
-  <div class="main">
-    <section class="pane reader" id="reader" tabindex="0" aria-label="Reader"></section>
-    <section class="term"><div id="out" aria-live="polite"></div></section>
-  </div>
-  <aside class="rail" id="rail">
-    <h3>CANON RAIL · 66</h3>
-    <div id="bookrail"></div>
-    <h3>SIDE</h3>
-    <div id="sidebody"></div>
-    <div class="metrics">
-      <div>THROUGHPUT <span id="mTp" class="ok">0 v/s</span></div>
-      <div>STABILITY <span id="mSt">100%</span></div>
-      <div>FOCUS <span id="mFc" class="y">idle</span></div>
-      <div>CACHE <span id="mCa">0 ch</span></div>
-    </div>
-  </aside>
-</div>
-<form class="promptbar" id="f" autocomplete="off">
-  <span class="prompt">KJV://$</span>
-  <input id="cmd" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="john 3:16 · search love · plan · speak · help" />
-  <span class="blink">█</span>
-</form>
-<div class="ac" id="ac"></div>
-<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
-<script src="js/app.js?v=5" defer></script>
+  <main class="reader" id="reader"></main>
+  <div class="hint" id="hint">You start in Matthew. Tap a verse twice to sit with just that verse.</div>
+  <form class="look" id="form">
+    <input id="q" autocomplete="off" autocapitalize="off" placeholder="Matthew 1" />
+    <button class="btn" type="submit">Go</button>
+  </form>
+  <div class="sheet-bg" id="overlay"><div class="sheet" id="sheet"></div></div>
+  <script src="js/seed.js?v=7"></script>
+  <script src="js/reader.js?v=7"></script>
 </body>
 </html>
