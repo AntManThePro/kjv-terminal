@@ -5,6 +5,8 @@ BOOKS.forEach((n, i) => { ALIAS[n.toLowerCase()] = i; ALIAS[n.toLowerCase().repl
 Object.assign(ALIAS, {gen:0,exo:1,lev:2,num:3,deut:4,josh:5,judg:6,ru:7,"1sam":8,"2sam":9,"1kgs":10,"2kgs":11,"1chr":12,"2chr":13,ezr:14,neh:15,est:16,ps:18,psalm:18,psalms:18,prov:19,ecc:20,song:21,isa:22,jer:23,lam:24,eze:25,dan:26,hos:27,joel:28,am:29,oba:30,jon:31,mic:32,nah:33,hab:34,zep:35,hag:36,zec:37,mal:38,matt:39,mt:39,mk:40,lk:41,jn:42,john:42,act:43,rom:44,"1cor":45,"2cor":46,gal:47,eph:48,phil:49,col:50,"1th":51,"2th":52,"1tim":53,"2tim":54,tit:55,phm:56,heb:57,jas:58,"1pet":59,"2pet":60,"1jn":61,"2jn":62,"3jn":63,jude:64,rev:65});
 const mem = {};
 const log = [];
+let notes = {};
+try { notes = JSON.parse(localStorage.getItem("kjv.quiet.notes") || "{}") || {}; } catch (e) { notes = {}; }
 let cur;
 try { cur = JSON.parse(localStorage.getItem("kjv.quiet.place") || ""); } catch (e) { cur = null; }
 if (!cur || !cur.book) cur = { book: "Matthew", ch: 1, vs: 1 };
@@ -13,9 +15,11 @@ const $ = (id) => document.getElementById(id);
 function esc(s){ return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
 function remember(msg){ log.push(msg); if (log.length > 40) log.shift(); }
 function savePlace(){ localStorage.setItem("kjv.quiet.place", JSON.stringify(cur)); }
+function saveNotes(){ localStorage.setItem("kjv.quiet.notes", JSON.stringify(notes)); }
 function applyType(){ document.documentElement.style.setProperty("--fs", typeSize + "px"); localStorage.setItem("kjv.quiet.fs", String(typeSize)); }
 function chapterCount(book){ const i = BOOKS.indexOf(book); return i >= 0 ? CHS[i] : 1; }
 function keyOf(book, ch){ return book + ":" + ch; }
+function verseKey(book, ch, vs){ return book + ":" + ch + ":" + vs; }
 function storeGet(k){ try { const raw = localStorage.getItem("kjv.ch." + k); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function storeSet(k, arr){ try { localStorage.setItem("kjv.ch." + k, JSON.stringify(arr)); } catch (e) {} }
 function bookName(t){
@@ -66,17 +70,23 @@ function paint(verses){
   sitting = false;
   $("reader").classList.remove("sit");
   $("where").innerHTML = cur.book + "  ·  chapter " + cur.ch + " of " + chapterCount(cur.book) + "<small>Tap to pick a chapter</small>";
-  $("hint").textContent = "Tap a verse twice to sit with just that verse. Tap Genesis or Matthew to change Testaments.";
+  $("hint").textContent = "Tap a verse, then Write a note. Tap the verse twice to sit with only that verse.";
   markHere(); savePlace();
   const bits = ["<div class='ch'>" + esc(cur.book.toUpperCase()) + "  " + cur.ch + "</div>"];
   verses.forEach((t, i) => {
     if (!t) return;
     const n = i + 1;
-    bits.push("<div class='verse" + (n === cur.vs ? " on" : "") + "' data-v='" + n + "'><span class='vnum'>" + n + "</span>" + esc(t) + "</div>");
+    const nk = verseKey(cur.book, cur.ch, n);
+    const mine = notes[nk];
+    const on = n === cur.vs ? " on" : "";
+    let extra = "";
+    if (mine) extra += "<div class='note-card'>" + esc(mine) + "</div>";
+    if (n === cur.vs) extra += "<button class='note-btn' type='button' data-note='" + n + "'>" + (mine ? "Edit this note" : "Write a note on this verse") + "</button>";
+    bits.push("<div class='verse" + on + "' data-v='" + n + "'><span class='vnum'>" + n + "</span>" + esc(t) + extra + "</div>");
   });
   $("reader").innerHTML = bits.join("");
-  const on = $("reader").querySelector(".verse.on");
-  if (on) on.scrollIntoView({ block: "center", behavior: "smooth" });
+  const onEl = $("reader").querySelector(".verse.on");
+  if (onEl) onEl.scrollIntoView({ block: "center", behavior: "smooth" });
 }
 function paintFail(msg){
   $("where").textContent = msg;
@@ -105,6 +115,26 @@ async function step(dir){
 }
 function show(html){ $("sheet").innerHTML = html; $("overlay").classList.add("show"); }
 function hide(){ $("overlay").classList.remove("show"); }
+function showNoteEditor(n){
+  if (n) cur.vs = +n;
+  const nk = verseKey(cur.book, cur.ch, cur.vs);
+  const existing = notes[nk] || "";
+  show("<h2>Your note</h2><p style='color:#8aa396'>" + esc(cur.book) + " " + cur.ch + ":" + cur.vs + " · stays on this phone</p><textarea id='notebox' class='notebox' rows='6' placeholder='Write what you want to remember…'>" + existing.replace(/</g,"&lt;") + "</textarea><div class='row'><button class='btn' id='saveNote' type='button'>Save note</button><button class='btn ghost' id='delNote' type='button'>Delete note</button><button class='btn ghost' id='closeNote' type='button'>Close</button></div>");
+  $("saveNote").onclick = () => {
+    const text = ($("notebox").value || "").trim();
+    if (text) notes[nk] = text; else delete notes[nk];
+    saveNotes(); hide();
+    paint(mem[keyOf(cur.book, cur.ch)] || []);
+    $("hint").textContent = text ? "Note saved under " + cur.book + " " + cur.ch + ":" + cur.vs + "." : "Note removed.";
+  };
+  $("delNote").onclick = () => {
+    delete notes[nk]; saveNotes(); hide();
+    paint(mem[keyOf(cur.book, cur.ch)] || []);
+    $("hint").textContent = "Note deleted.";
+  };
+  $("closeNote").onclick = hide;
+  setTimeout(() => { const b = $("notebox"); if (b) b.focus(); }, 50);
+}
 function showChapters(){
   const n = chapterCount(cur.book);
   const size = n > 60 ? 20 : 10;
@@ -126,8 +156,16 @@ function showBooks(){
   show("<h2>Choose a book</h2><div class='row' style='margin:0 0 .8rem'><button class='btn' data-ref='Genesis 1' type='button'>Genesis</button><button class='btn' data-ref='Matthew 1' type='button'>Matthew</button></div><p style='color:#8aa396'>Old Testament begins at Genesis. New Testament begins at Matthew.</p>"+ot+"<hr style='border-color:#3d6b55'>"+nt);
 }
 function showMore(){
-  show("<h2>A little more</h2><p>This is a page, not a streak. No account. No ads. One chapter at a time.</p><p>Tap a verse twice to sit with only that verse. Tap it again to bring the chapter back.</p><p>Matthew 1 and Genesis 1 live inside this page, so they open even with no signal. Other chapters stay on the phone after you open them once with internet.</p><div class='row'><button class='btn' id='smaller' type='button'>Smaller words</button><button class='btn' id='bigger' type='button'>Bigger words</button></div><h2 style='margin-top:1rem'>Notebook</h2><div class='note' id='note'>"+(log.length ? log.map(esc).join("\n") : "Nothing written yet.")+"</div><div class='row'><button class='btn' id='clear' type='button'>Clear notebook</button><button class='btn ghost' id='closeMore' type='button'>Close</button></div>");
-  $("clear").onclick = () => { log.length = 0; $("note").textContent = "Cleared. The notebook is empty."; };
+  const keys = Object.keys(notes);
+  let list = "<p style='color:#8aa396'>No verse notes yet. Tap a verse, then Write a note.</p>";
+  if (keys.length) {
+    list = keys.map((k) => {
+      const parts = k.split(":");
+      const ref = parts[0] + " " + parts[1] + ":" + parts[2];
+      return "<div class='note-list'><button class='book' data-ref='"+esc(parts[0]+" "+parts[1]+":"+parts[2])+"'>"+esc(ref)+"</button><div class='note-card'>"+esc(notes[k])+"</div></div>";
+    }).join("");
+  }
+  show("<h2>A little more</h2><p>Your notes stay on this phone only.</p><div class='row'><button class='btn' id='smaller' type='button'>Smaller words</button><button class='btn' id='bigger' type='button'>Bigger words</button></div><h2 style='margin-top:1rem'>Your notes</h2>"+list+"<div class='row'><button class='btn ghost' id='closeMore' type='button'>Close</button></div>");
   $("closeMore").onclick = hide;
   $("smaller").onclick = () => { typeSize = Math.max(16, typeSize-2); applyType(); };
   $("bigger").onclick = () => { typeSize = Math.min(28, typeSize+2); applyType(); };
@@ -145,13 +183,13 @@ function speak(){
 function sitToggle(n){
   if (sitting && cur.vs === n) {
     sitting = false; $("reader").classList.remove("sit");
-    $("hint").textContent = "Whole chapter is back. Tap a verse twice to sit with it again.";
+    $("hint").textContent = "Whole chapter is back.";
     return;
   }
   cur.vs = n; sitting = true; savePlace();
   [...$("reader").querySelectorAll(".verse")].forEach(el => el.classList.toggle("on", +el.getAttribute("data-v") === n));
   $("reader").classList.add("sit");
-  $("hint").textContent = "Sitting with " + cur.book + " " + cur.ch + ":" + n + ". Tap the verse again for the whole chapter.";
+  $("hint").textContent = "Sitting with " + cur.book + " " + cur.ch + ":" + n + ".";
 }
 $("prev").onclick = () => step(-1);
 $("next").onclick = () => step(1);
@@ -168,6 +206,8 @@ $("overlay").onclick = (e) => {
   if (ref) { hide(); openRef(ref.getAttribute("data-ref")); }
 };
 $("reader").onclick = (e) => {
+  const noteBtn = e.target.closest("[data-note]");
+  if (noteBtn) { e.stopPropagation(); showNoteEditor(noteBtn.getAttribute("data-note")); return; }
   const go = e.target.closest("[data-ref]");
   if (go) { openRef(go.getAttribute("data-ref")); return; }
   const v = e.target.closest(".verse");
@@ -176,7 +216,7 @@ $("reader").onclick = (e) => {
   if (cur.vs === n) sitToggle(n);
   else {
     cur.vs = n; savePlace(); sitting = false; $("reader").classList.remove("sit");
-    [...$("reader").querySelectorAll(".verse")].forEach(el => el.classList.toggle("on", el === v));
+    paint(mem[keyOf(cur.book, cur.ch)] || []);
   }
 };
 let x0 = 0;
